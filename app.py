@@ -15,6 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def home():
+    return {"status": "Engine Online", "backend": "Rust Native Binaries Loaded"}
+
 @app.post("/api/v1/schedule")
 async def generate_schedule(payload: dict):
     try:
