@@ -1,37 +1,66 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const mongoose = require('mongoose');
+const Schedule = require('./models/Schedule');
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// The address of our Python/Rust scheduling engine
 const PYTHON_ENGINE_URL = process.env.PYTHON_ENGINE_URL || 'http://localhost:8000/api/v1/schedule';
+const PORT = process.env.PORT || 5000;
 
-// Route to handle schedule generation requests from React
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB successfully'))
+    .catch(err => console.error('MongoDB Connection Error:', err));
+
+// Health Check Route
+app.get('/', (req, res) => {
+    res.json({ status: "Gateway Online", database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected" });
+});
+
+// The core engine pipeline route
 app.post('/api/generate-schedule', async (req, res) => {
     try {
         console.log("Received request from React. Forwarding to Python Engine...");
         
-        // Pass the universal JSON payload to the Python engine
+        // 1. Pass the payload to the Python engine
         const engineResponse = await axios.post(PYTHON_ENGINE_URL, req.body);
-        
         console.log("Engine returned schedule successfully.");
         
-        // In the future, you will save engineResponse.data to MongoDB here
-        // before sending it back to the frontend.
+        // 2. Save the input payload AND the engine output to MongoDB
+        const newSchedule = new Schedule({
+            title: `Run - ${new Date().toLocaleTimeString()}`,
+            payload: req.body,
+            result: engineResponse.data
+        });
         
-        res.json(engineResponse.data);
+        const savedSchedule = await newSchedule.save();
+        console.log(`Saved schedule to database with ID: ${savedSchedule._id}`);
+        
+        // 3. Return the saved document to the frontend
+        res.json(savedSchedule);
+
     } catch (error) {
         console.error("Engine Communication Error:", error.message);
-        res.status(500).json({ error: "Failed to generate schedule from engine." });
+        res.status(500).json({ error: "Failed to process schedule via engine pipeline." });
     }
 });
 
-const PORT = process.env.PORT || 5000;
+// Route to fetch all past schedules (for a future Dashboard view)
+app.get('/api/schedules', async (req, res) => {
+    try {
+        const schedules = await Schedule.find().sort({ createdAt: -1 });
+        res.json(schedules);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to retrieve schedules." });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Node Gateway running on http://localhost:${PORT}`);
 });
