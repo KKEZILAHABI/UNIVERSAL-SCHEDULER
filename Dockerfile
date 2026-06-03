@@ -17,6 +17,9 @@ COPY . .
 # Install Python backend dependencies AND maturin
 RUN pip install --no-cache-dir fastapi uvicorn pydantic maturin
 
+# Inject the PyO3 compatibility flag for Python 3.14
+ENV PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
+
 # PROD COMPILE: Build the Rust wheel, then install it system-wide in Docker
 RUN maturin build --release --out dist
 RUN pip install dist/*.whl
