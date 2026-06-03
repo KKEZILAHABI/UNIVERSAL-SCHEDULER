@@ -8,7 +8,7 @@ const Schedule = require('./models/Schedule');
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://universal-scheduler-murex.vercel.app/']
+    origin: ['http://localhost:5173', 'https://universal-scheduler-murex.vercel.app']
 }));
 app.use(express.json());
 
