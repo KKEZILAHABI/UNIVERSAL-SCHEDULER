@@ -7,10 +7,12 @@ const Schedule = require('./models/Schedule');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://universal-scheduler-murex.vercel.app/']
+}));
 app.use(express.json());
 
-const PYTHON_ENGINE_URL = process.env.PYTHON_ENGINE_URL || 'http://localhost:8000/api/v1/schedule';
+const PYTHON_ENGINE_URL = process.env.PYTHON_ENGINE_URL || 'http://localhost:8000/api/v1/schedule';/* */
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB

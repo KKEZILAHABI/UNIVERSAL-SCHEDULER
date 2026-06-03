@@ -20,7 +20,7 @@ function App() {
 
   const fetchHistory = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/schedules');
+      const response = await axios.get(`${import.meta.env.VITE_GATEWAY_URL}/api/schedules`);
       setHistory(response.data);
     } catch (error) {
       console.error("Failed to fetch history:", error);
@@ -79,7 +79,7 @@ function App() {
     };
 
     try {
-      const response = await axios.post('http://localhost:5000/api/generate-schedule', payload);
+      const response = await axios.post(`${import.meta.env.VITE_GATEWAY_URL}/api/generate-schedule`, payload);
       setSchedule(response.data.result); // Extract the engine result from the saved DB document
       fetchHistory(); // Refresh the sidebar instantly
     } catch (error) {
